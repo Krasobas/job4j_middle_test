@@ -1,0 +1,250 @@
+services:
+
+  # ===== Infrastructure =====
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: cd_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-cd_auth}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - cd_postgres_data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  broker:
+    image: apache/kafka:latest
+    container_name: broker
+    ports:
+      - "9094:9094"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:9092,EXTERNAL://localhost:9094
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8088:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: broker:9092
+    depends_on:
+      broker:
+        condition: service_healthy
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: cd_jenkins
+    restart: unless-stopped
+    ports:
+      - "8090:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+    environment:
+      JAVA_OPTS: ${JAVA_OPTS:--Xmx2g}
+
+  # ===== Services =====
+
+  eureka:
+    build: services/cd_eureka
+    image: checkdev/cd_eureka:latest
+    container_name: cd_eureka
+    ports:
+      - "9009:9009"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9009/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth:
+    build: services/cd_auth
+    image: checkdev/cd_auth:latest
+    container_name: cd_auth
+    ports:
+      - "9900:9900"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 9900
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/cd_auth
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      SECURITY_OAUTH2_CLIENT_CLIENT_ID: ${OAUTH2_CLIENT_ID:-job4j}
+      SECURITY_OAUTH2_CLIENT_CLIENT_SECRET: ${OAUTH2_CLIENT_SECRET:-password}
+      SECURITY_OAUTH2_RESOURCE_USERINFOURL: http://auth:9900/user
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:9009/eureka
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9900/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  desc:
+    build: services/cd_desc
+    image: checkdev/cd_desc:latest
+    container_name: cd_desc
+    ports:
+      - "9902:9902"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 9902
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/cd_desc
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      SECURITY_OAUTH2_RESOURCE_USERINFOURL: http://auth:9900/user
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:9009/eureka
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9902/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  generator:
+    build: services/cd_generator
+    image: checkdev/cd_generator:latest
+    container_name: cd_generator
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 9903
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/cd_generator
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      SECURITY_OAUTH2_RESOURCE_USERINFOURL: http://auth:9900/user
+      HH_TOKEN: ${HH_TOKEN}
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:9009/eureka
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9903/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  mock:
+    build: services/cd_mock
+    image: checkdev/cd_mock:latest
+    container_name: cd_mock
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 9912
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/cd_mock
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      SECURITY_OAUTH2_RESOURCE_USERINFOURL: http://auth:9900/user
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:9009/eureka
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9912/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  site:
+    build: services/cd_site
+    image: checkdev/cd_site:latest
+    container_name: cd_site
+    ports:
+      - "8080:8080"
+    depends_on:
+      eureka:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+      desc:
+        condition: service_healthy
+      mock:
+        condition: service_healthy
+      generator:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8080
+      BOT_USERNAME: ${BOT_USERNAME:-checkdev_bot}
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:9009/eureka
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  notification:
+    build: services/cd_notification
+    image: checkdev/cd_notification:latest
+    container_name: cd_notification
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+      site:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 9920
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/cd_notification
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_OPAQUETOKEN_INTROSPECTION_URI: http://auth:9900/user
+      ACCESS_KEY: ${ACCESS_KEY:-96GcWB8a}
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka:9009/eureka
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9920/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+volumes:
+  cd_postgres_data:
+  jenkins_home:
+  kafka-data:
