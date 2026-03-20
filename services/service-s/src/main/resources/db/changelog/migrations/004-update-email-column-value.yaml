@@ -1,0 +1,34 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-update-email-column-value
+      author: krasobas
+      changes:
+        - update:
+            tableName: students
+            columns:
+              - column:
+                  name: email
+                  value: "ivanov.ivan@university.com"
+            where: "record_book_number = 'RB-001'"
+        - update:
+            tableName: students
+            columns:
+              - column:
+                  name: email
+                  value: "petrova.anna@university.com"
+            where: "record_book_number = 'RB-002'"
+        - update:
+            tableName: students
+            columns:
+              - column:
+                  name: email
+                  value: "sidorov.dmitry@university.com"
+            where: "record_book_number = 'RB-003'"
+      rollback:
+        - update:
+            tableName: students
+            columns:
+              - column:
+                  name: email
+                  value: null
+            where: "record_book_number IN ('RB-001', 'RB-002', 'RB-003')"

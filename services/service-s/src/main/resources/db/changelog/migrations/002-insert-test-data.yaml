@@ -1,0 +1,69 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-insert-test-data
+      author: krasobas
+      context: dev
+      changes:
+        - insert:
+            tableName: students
+            columns:
+              - column:
+                  name: record_book_number
+                  value: "RB-001"
+              - column:
+                  name: faculty
+                  value: "Computer Science"
+              - column:
+                  name: last_name
+                  value: "Ivanov"
+              - column:
+                  name: first_name
+                  value: "Ivan"
+              - column:
+                  name: middle_name
+                  value: "Ivanovich"
+              - column:
+                  name: photo_key
+                  value: "photo_001.png"
+        - insert:
+            tableName: students
+            columns:
+              - column:
+                  name: record_book_number
+                  value: "RB-002"
+              - column:
+                  name: faculty
+                  value: "Mathematics"
+              - column:
+                  name: last_name
+                  value: "Petrova"
+              - column:
+                  name: first_name
+                  value: "Anna"
+              - column:
+                  name: middle_name
+                  value: "Sergeevna"
+              - column:
+                  name: photo_key
+                  value: "photo_002.png"
+        - insert:
+            tableName: students
+            columns:
+              - column:
+                  name: record_book_number
+                  value: "RB-003"
+              - column:
+                  name: faculty
+                  value: "Physics"
+              - column:
+                  name: last_name
+                  value: "Sidorov"
+              - column:
+                  name: first_name
+                  value: "Dmitry"
+              - column:
+                  name: middle_name
+                  value: "Alekseevich"
+              - column:
+                  name: photo_key
+                  value: "photo_003.png"

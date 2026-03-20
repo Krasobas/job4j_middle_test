@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-students-table
+      author: krasobas
+      changes:
+        - createTable:
+            tableName: students
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: record_book_number
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: faculty
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: first_name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: middle_name
+                  type: varchar(100)
+              - column:
+                  name: photo_key
+                  type: varchar(255)

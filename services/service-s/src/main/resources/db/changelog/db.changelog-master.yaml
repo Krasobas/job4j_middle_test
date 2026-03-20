@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/migrations/001-create-students-table.yaml
+  - include:
+      file: db/changelog/migrations/002-insert-test-data.yaml
+  - include:
+      file: db/changelog/migrations/003-add-email-column.yaml
+  - include:
+      file: db/changelog/migrations/004-update-email-column-value.yaml

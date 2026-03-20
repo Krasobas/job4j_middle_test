@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-add-email-column
+      author: krasobas
+      changes:
+        - addColumn:
+            tableName: students
+            columns:
+              - column:
+                  name: email
+                  type: varchar(255)
+                  constraints:
+                    unique: true

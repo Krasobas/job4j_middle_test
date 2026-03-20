@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:tns="http://job4j.ru/s"
+           targetNamespace="http://job4j.ru/s"
+           elementFormDefault="qualified">
+
+    <xs:element name="getAllStudentsRequest">
+        <xs:complexType/>
+    </xs:element>
+
+    <xs:element name="getAllStudentsResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="student" type="tns:studentType"
+                            maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="getStudentRequest">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="recordBookNumber" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="getStudentResponse">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="student" type="tns:studentType"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="studentType">
+        <xs:sequence>
+            <xs:element name="recordBookNumber" type="xs:string"/>
+            <xs:element name="faculty" type="xs:string"/>
+            <xs:element name="lastName" type="xs:string"/>
+            <xs:element name="firstName" type="xs:string"/>
+            <xs:element name="middleName" type="xs:string" minOccurs="0"/>
+            <xs:element name="email" type="xs:string"/>
+            <xs:element name="photoKey" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+</xs:schema>
