@@ -29,7 +29,7 @@ public class WebServiceConfig {
         var definition = new DefaultWsdl11Definition();
         definition.setPortTypeName("StudentsPort");
         definition.setLocationUri("/ws");
-        definition.setTargetNamespace("http://job4j.ru/s");
+        definition.setTargetNamespace("http://job4j.ru/students");
         definition.setSchema(studentsSchema);
         return definition;
     }

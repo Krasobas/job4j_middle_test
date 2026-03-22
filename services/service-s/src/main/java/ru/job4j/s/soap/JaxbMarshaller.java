@@ -24,12 +24,11 @@ public class JaxbMarshaller {
         try {
             Marshaller marshaller = context.createMarshaller();
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-            marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true);
-            StringWriter writer = new StringWriter();
+            var writer = new StringWriter();
             marshaller.marshal(object, writer);
             return writer.toString();
         } catch (JAXBException e) {
-            throw new RuntimeException("Failed to marshal object", e);
+            throw new RuntimeException("Failed to marshal", e);
         }
     }
 }

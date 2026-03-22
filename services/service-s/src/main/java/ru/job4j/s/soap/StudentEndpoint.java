@@ -10,7 +10,7 @@ import ru.job4j.s.soap.gen.*;
 @Endpoint
 public class StudentEndpoint {
 
-    private static final String NAMESPACE = "http://job4j.ru/s";
+    private static final String NAMESPACE = "http://job4j.ru/students";
 
     private final StudentService studentService;
 
