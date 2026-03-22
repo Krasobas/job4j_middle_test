@@ -1,0 +1,36 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: service-r
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  cloud:
+    gateway:
+      routes:
+        - id: student_service_route
+          uri: ${service-s.url}
+          predicates:
+            - Path=/api/students/**
+
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: service-r
+      auto-offset-reset: earliest
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+  threads:
+    virtual:
+      enabled: true
+
+endpoint:
+  health:
+    show-details: always
