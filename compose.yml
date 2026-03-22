@@ -1,7 +1,5 @@
 services:
 
-  # ===== Infrastructure =====
-
   postgres:
     image: postgres:16-alpine
     container_name: cd_postgres
@@ -9,8 +7,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-students_db}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -22,8 +18,6 @@ services:
   broker:
     image: apache/kafka:latest
     container_name: broker
-    ports:
-      - "9094:9094"
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
@@ -36,6 +30,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     volumes:
       - kafka-data:/var/lib/kafka/data
     healthcheck:
@@ -49,7 +44,6 @@ services:
     container_name: photo-storage
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"
       - "9001:9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_AKEY:-minio-access-key}
@@ -75,14 +69,10 @@ services:
       - ./init/minio/init.sh:/usr/bin/init.sh
     entrypoint: /bin/sh /usr/bin/init.sh
 
-  # ===== Services =====
-
   service-s:
     build: services/service-s
     image: job4j_middle_test/service-s:latest
     container_name: service-s
-    ports:
-      - "9900:9900"
     depends_on:
       postgres:
         condition: service_healthy
@@ -91,7 +81,7 @@ services:
       broker:
         condition: service_healthy
     environment:
-      SERVER_PORT: 9900
+      SERVER_PORT: 8081
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/students_db
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-password}
@@ -107,24 +97,23 @@ services:
       start_period: 40s
 
   service-r:
-    build: services/cd_desc
-    image: checkdev/cd_desc:latest
-    container_name: cd_desc
+    build: services/service-r
+    image: checkdev/service-r:latest
+    container_name: service-r
     ports:
-      - "9902:9902"
+      - "8080:8080"
     depends_on:
-      service-s:
+      broker:
         condition: service_healthy
+      service-s:
+        condition: service_started
     environment:
-      SERVER_PORT: 9902
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/cd_desc
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-password}
-      SECURITY_OAUTH2_CLIENT_CLIENT_ID: ${OAUTH2_CLIENT_ID:-job4j}
-      SECURITY_OAUTH2_CLIENT_CLIENT_SECRET: ${OAUTH2_CLIENT_SECRET:-password}
-      SECURITY_OAUTH2_RESOURCE_USERINFOURL: http://auth:9900/user
+      SERVER_PORT: 8080
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: broker:9092
+      SERVICE_S_URL: http://service-s:8081
+      SPRING_THREADS_VIRTUAL_ENABLED: true
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:9902/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
