@@ -32,19 +32,19 @@ A distributed system built with Spring Boot, implementing asynchronous data retr
 
 ## Tech Stack
 
-| Component         | Technology                                          |
-|-------------------|-----------------------------------------------------|
-| Language          | Java 21, Virtual Threads                            |
-| Framework         | Spring Boot 3.4                                     |
-| Messaging         | Apache Kafka (KRaft mode, no Zookeeper)             |
-| Database          | PostgreSQL 17                                       |
-| Object Storage    | MinIO (S3-compatible)                               |
-| SOAP              | Spring Web Services (Contract-First, XSD → JAXB)   |
-| Routing           | Apache Camel                                        |
-| Security          | Spring Security (HTTP Basic)                        |
-| API Docs          | Springdoc OpenAPI / Swagger UI                      |
-| Schema Migration  | Liquibase                                           |
-| Containerization  | Docker, Docker Compose V2                           |
+| Component         | Technology                                       |
+|-------------------|--------------------------------------------------|
+| Language          | Java 21, Virtual Threads                         |
+| Framework         | Spring Boot 3.4                                  |
+| Messaging         | Apache Kafka (KRaft mode, no Zookeeper)          |
+| Database          | PostgreSQL 16                                    |
+| Object Storage    | MinIO (S3-compatible)                            |
+| SOAP              | Spring Web Services (Contract-First, XSD → JAXB) |
+| Routing           | Apache Camel                                     |
+| Security          | Spring Security (HTTP Basic)                     |
+| API Docs          | Springdoc OpenAPI / Swagger UI                   |
+| Schema Migration  | Liquibase                                        |
+| Containerization  | Docker, Docker Compose V2                        |
 
 ## Project Structure
 
@@ -124,7 +124,7 @@ Expected response:
 Service S SOAP interface is internal (not exposed to host). Verify from within the Docker network:
 
 ```bash
-docker compose exec service-r wget -qO- http://service-s:9900/ws/students.wsdl
+docker compose exec service-r wget -qO- http://service-s:8080/ws/students.wsdl
 ```
 
 This should return the WSDL document with `getAllStudents` and `getStudent` operations.
@@ -163,14 +163,14 @@ docker compose down -v
 | `GET`  | `/swagger-ui.html`              | Public   | API documentation        |
 | `GET`  | `/actuator/health`              | Public   | Health check             |
 
-### Service S — SOAP (port 9900, internal only)
+### Service S — SOAP (port 8080, internal only)
 
 | Operation                | Description                              |
 |--------------------------|------------------------------------------|
 | `getAllStudentsRequest`   | Returns all student records as XML       |
 | `getStudentRequest`      | Returns single student by record book number |
 
-WSDL: `http://service-s:9900/ws/students.wsdl` (accessible within Docker network only)
+WSDL: `http://service-s:8080/ws/students.wsdl` (accessible within Docker network only)
 
 ## Architectural Decisions
 
