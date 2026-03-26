@@ -80,7 +80,7 @@ spring:
       enabled: true
 
 service-s:
-  url: ${SERVICE_S_URL:http://service-s:9900}
+  url: ${SERVICE_S_URL:http://service-s:8080}
 ```
 
 ## Project Structure
