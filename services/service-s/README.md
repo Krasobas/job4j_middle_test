@@ -34,9 +34,9 @@ Bucket `students` stores photo files. `photo_key` in the database maps to the ob
 
 ## API
 
-### SOAP (port 9900)
+### SOAP (port 8080)
 
-WSDL: `http://service-s:9900/ws/students.wsdl` (internal, not exposed to host)
+WSDL: `http://service-s:8080/ws/students.wsdl` (internal, not exposed to host)
 
 | Operation                | Input                 | Output                          |
 |--------------------------|-----------------------|---------------------------------|
@@ -46,7 +46,7 @@ WSDL: `http://service-s:9900/ws/students.wsdl` (internal, not exposed to host)
 Verify from within Docker network:
 
 ```bash
-docker compose exec service-r wget -qO- http://service-s:9900/ws/students.wsdl
+docker compose exec service-r wget -qO- http://service-s:8080/ws/students.wsdl
 ```
 
 ### Kafka
@@ -58,7 +58,7 @@ docker compose exec service-r wget -qO- http://service-s:9900/ws/students.wsdl
 
 Correlation ID from the request headers is copied to the response. Without it, Service R's `ReplyingKafkaTemplate` cannot match the response and times out.
 
-### Internal HTTP (port 9900)
+### Internal HTTP (port 8080)
 
 | Method | Endpoint                  | Description                      |
 |--------|---------------------------|----------------------------------|
@@ -83,7 +83,7 @@ This endpoint is called by Service R to proxy photos to the browser. Not accessi
 
 ```yaml
 server:
-  port: 9900
+  port: 8080
 
 spring:
   datasource:
