@@ -1,0 +1,19 @@
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: service-r-test
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  cloud:
+    gateway:
+      routes: []
+
+service-s:
+  url: http://localhost:8081
+
+camel:
+  springboot:
+    main-run-controller: false
+    auto-startup: false
